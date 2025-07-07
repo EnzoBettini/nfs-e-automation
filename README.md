@@ -1,5 +1,3 @@
----
-
 # Automação de Emissão de Notas Fiscais de Serviço (NFS-e)
 
 ## Descrição
@@ -10,25 +8,25 @@ A automação realiza login, leitura de dados de clientes a partir de uma planil
 
 ## Funcionalidades Principais
 
-* **Login automático:**
+- **Login automático:**
   Realiza autenticação utilizando credenciais armazenadas em arquivo `.env`.
 
-* **Leitura de dados:**
+- **Leitura de dados:**
   Importa CPF e valores dos clientes a partir de um arquivo CSV.
 
-* **Processamento de clientes:**
+- **Processamento de clientes:**
 
-  * Filtra clientes com CPF inválido, armazenando-os em arquivo separado.
-  * Preenche os dados de endereço automaticamente quando necessário.
-  * Seleciona o serviço correto em dropdown baseado em código.
-  * Gera descrições personalizadas incluindo cálculo de imposto (17,72% do valor do cliente).
-  * Preenche o valor da nota conforme o valor da planilha.
-  * Para fins de teste, realiza clique no botão "Voltar" ao invés de confirmar a emissão da nota.
+  - Filtra clientes com CPF inválido, armazenando-os em arquivo separado.
+  - Preenche os dados de endereço automaticamente quando necessário.
+  - Seleciona o serviço correto em dropdown baseado em código.
+  - Gera descrições personalizadas incluindo cálculo de imposto (17,72% do valor do cliente).
+  - Preenche o valor da nota conforme o valor da planilha.
+  - Para fins de teste, realiza clique no botão "Voltar" ao invés de confirmar a emissão da nota.
 
-* **Gerenciamento de resultados:**
+- **Gerenciamento de resultados:**
 
-  * Clientes com CPF inválido são salvos em `sem_cpf.csv`.
-  * Clientes com notas processadas são salvos em `notas_lancadas.csv`.
+  - Clientes com CPF inválido são salvos em `sem_cpf.csv`.
+  - Clientes com notas processadas são salvos em `notas_lancadas.csv`.
 
 ## Como usar
 
@@ -91,5 +89,3 @@ The automation logs in, reads client data from a spreadsheet, fills in the requi
 3. Run the Python script to start the automation.
 
 4. After completion, check the `sem_cpf.csv` and `notas_lancadas.csv` files in `data/output/`.
-
----
