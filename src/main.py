@@ -1,22 +1,53 @@
 import pandas as pd
+import os
 
-df = pd.read_csv('../data/input/conf.csv', sep = None, engine='python')
+df = pd.read_csv('../data/input/conf.csv', sep=',', engine='python')
 
-colunas_para_excluir = ['MAQ BAN.', 'MAQ CL.', 'SERVIÇO', 'DATA', 'CLIENTE', 'ANIMAL', 'FORMA PGTO'];
-df = df.drop(columns=colunas_para_excluir);
-df = df.dropna()
+# Remove colunas extras vazias
+df = df.dropna(axis=1, how='all')
 
+# Remove linhas totalmente vazias (antes de renomear colunas)
+df = df.dropna(how='all')
+
+# Remove linhas onde todas as células são strings vazias ou whitespace
+df = df[~df.apply(lambda row: row.astype(str).str.strip().eq('').all(), axis=1)]
+
+# Exclui colunas indesejadas
+colunas_para_excluir = ['MAQ BAN.', 'MAQ CL.', 'SERVIÇO', 'DATA', 'CLIENTE', 'ANIMAL', 'FORMA PGTO']
+df = df.drop(columns=colunas_para_excluir, errors='ignore')
+
+# Renomeia a primeira coluna para ID
 colunas = list(df.columns)
 colunas[0] = 'ID'
 df.columns = colunas
+
+# Remove linhas onde ID é NaN ou vazio
+df = df.dropna(subset=['ID'])
+df = df[df['ID'].astype(str).str.strip() != '']
+
+# Converte ID para numérico, forçando valores inválidos a NaN
+df['ID'] = pd.to_numeric(df['ID'], errors='coerce')
+
+# Remove linhas onde a conversão falhou (resultou em NaN)
+df = df.dropna(subset=['ID'])
+
+# Converte para inteiro
 df['ID'] = df['ID'].astype(int)
 
-display(df)
+# Reset do índice para ficar sequencial
+df = df.reset_index(drop=True)
+
+print(df)
+
+# Cria o diretório filtered se não existir
+os.makedirs('../data/input/filtered', exist_ok=True)
+
 df.to_csv('../data/input/filtered/filtered_df.csv', index=False)
 
 import re
 import time
 import os
+import sys
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -25,6 +56,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 # --- Configurações iniciais ---
 
@@ -34,14 +66,20 @@ load_dotenv(dotenv_path)
 EMAIL = os.getenv("EMAIL")
 SENHA = os.getenv("SENHA")
 
-# Caminho do chromedriver
-chromedriver_path = r"C:\Users\User\Desktop\Repositorios\Automações\src\others\chromedriver.exe"
-
 # Configurações do navegador Chrome
 options = Options()
 options.add_argument("--start-maximized")
-service = Service(executable_path=chromedriver_path)
-driver = webdriver.Chrome(service=service, options=options)
+
+# Detecta o sistema operacional e configura o driver apropriado
+if sys.platform == "win32":
+    # Windows: usa o caminho manual (mantém compatibilidade)
+    chromedriver_path = r"C:\Users\User\Desktop\Repositorios\Automações\src\others\chromedriver.exe"
+    service = Service(executable_path=chromedriver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+else:
+    # Mac/Linux: usa webdriver-manager (baixa automaticamente)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
 # --- Login e navegação até Consulta Vendas ---
 
@@ -185,6 +223,9 @@ for index, row in df_resumo.iterrows():
 print("\nResultado final:")
 print(df_resumo)
 
+# Cria o diretório output se não existir
+os.makedirs('../data/output', exist_ok=True)
+
 # Opcional: salvar resultado em CSV
 df_resumo.to_csv("../data/output/clientes_com_cpf.csv", index=False)
 
@@ -198,12 +239,20 @@ load_dotenv(dotenv_path)
 EMAIL = os.getenv("LOGIN")
 SENHA = os.getenv("SENHA_ISSE")
 
-chromedriver_path = r"C:\Users\User\Desktop\Repositorios\Automações\src\others\chromedriver.exe"
-
+# Configurações do navegador Chrome
 options = Options()
 options.add_argument("--start-maximized")
-service = Service(executable_path=chromedriver_path)
-driver = webdriver.Chrome(service=service, options=options)
+
+# Detecta o sistema operacional e configura o driver apropriado
+if sys.platform == "win32":
+    # Windows: usa o caminho manual (mantém compatibilidade)
+    chromedriver_path = r"C:\Users\User\Desktop\Repositorios\Automações\src\others\chromedriver.exe"
+    service = Service(executable_path=chromedriver_path)
+    driver = webdriver.Chrome(service=service, options=options)
+else:
+    # Mac/Linux: usa webdriver-manager (baixa automaticamente)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
 # --- Login ---
 
@@ -297,6 +346,9 @@ for index, row in df.iterrows():
     df_notas_lancadas = pd.concat([df_notas_lancadas, pd.DataFrame([row])], ignore_index=True)
 
     time.sleep(3)  # comente esse sleep depois para acelerar
+
+# Cria o diretório output se não existir
+os.makedirs('../data/output', exist_ok=True)
 
 # Salva arquivos de saída
 df_sem_cpf.to_csv("../data/output/sem_cpf.csv", index=False)
